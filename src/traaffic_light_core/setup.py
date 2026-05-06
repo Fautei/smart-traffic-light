@@ -11,13 +11,17 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    package_data={'': ['py.typed']},
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'ultralytics',
+        'opencv-python',
+        'PyYAML',
+    ],
     zip_safe=True,
     maintainer='Fautei',
     maintainer_email='maxim.6926@gmail.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='Package for smart traffic light system with YOLO object detection',
+    license='Apache-2.0',
     extras_require={
         'test': [
             'pytest',
@@ -25,7 +29,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'object_detector = traaffic_light_core.object_detector:main'
+            'object_detector = traaffic_light_core.object_detector:main',
+            'traffic_light_logic = traaffic_light_core.traffic_light_logic:main',
         ],
     },
 )

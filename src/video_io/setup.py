@@ -13,9 +13,11 @@ setup(
     ],
     install_requires=[
         'setuptools',
-        #'pika',
-        #'requests'
-        ],
+        'opencv-python',
+        'PyYAML',
+        'cv_bridge',
+        'sensor_msgs',
+    ],
     zip_safe=True,
     maintainer='maxim',
     maintainer_email='maxim.6926@gmail.com',
