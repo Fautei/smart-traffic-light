@@ -15,35 +15,31 @@ def generate_launch_description():
         description='ID of this traffic light node (0 or 1)'
     )
     
-    gstreamer_pipeline_arg = DeclareLaunchArgument(
-        'gstreamer_pipeline',
-        default_value='',
-        description='GStreamer pipeline for camera input'
+    # gstreamer_pipeline_arg = DeclareLaunchArgument(
+    #     'gstreamer_pipeline',
+    #     default_value='',
+    #     description='GStreamer pipeline for camera input'
+    # )
+    
+
+    
+    # calibration_file_arg = DeclareLaunchArgument(
+    #     'calibration_file',
+    #     default_value='',
+    #     description='Path to camera calibration YAML file'
+    # )
+    
+    model_config_arg = DeclareLaunchArgument(
+        'model_config',
+        default_value='yolov5su',
+        description='YOLO model config (yolov8n, yolov8s, yolov8m, yolov8l, yolov8x)'
     )
     
-    camera_info_url_arg = DeclareLaunchArgument(
-        'camera_info_url',
-        default_value='',
-        description='Camera info URL (file://path/to/calibration.yaml)'
-    )
-    
-    calibration_file_arg = DeclareLaunchArgument(
-        'calibration_file',
-        default_value='',
-        description='Path to camera calibration YAML file'
-    )
-    
-    model_path_arg = DeclareLaunchArgument(
-        'model_path',
-        default_value='',
-        description='Path to YOLO model file'
-    )
-    
-    confidence_threshold_arg = DeclareLaunchArgument(
-        'confidence_threshold',
-        default_value='0.5',
-        description='Confidence threshold for object detection'
-    )
+    # confidence_threshold_arg = DeclareLaunchArgument(
+    #     'confidence_threshold',
+    #     default_value='0.5',
+    #     description='Confidence threshold for object detection'
+    # )
     
     wait_time_clear_arg = DeclareLaunchArgument(
         'wait_time_clear',
@@ -75,9 +71,8 @@ def generate_launch_description():
         executable='camera_node',
         name='camera_node',
         parameters=[{
-            'gstreamer_pipeline': LaunchConfiguration('gstreamer_pipeline'),
-            'camera_info_url': LaunchConfiguration('camera_info_url'),
-            'calibration_file': LaunchConfiguration('calibration_file'),
+            'rtsp_url': "rtsp://admin:daguza123@192.168.1.10",#LaunchConfiguration('gstreamer_pipeline'),
+            'calibration_file': "/home/maxim/Desktop/calibration_1.yml", #LaunchConfiguration('calibration_file'),
             'frame_id': 'camera',
             'camera_name': 'traffic_light_camera',
         }],
@@ -90,11 +85,8 @@ def generate_launch_description():
         executable='object_detector',
         name='object_detector',
         parameters=[{
-            'model_path': LaunchConfiguration('model_path'),
-            'confidence_threshold': LaunchConfiguration('confidence_threshold'),
-            'classes_to_detect': ['car', 'truck', 'bus'],
-            'publish_detections': True,
-            'draw_detections': False,
+            'model_path': "assets/models/yolo26s.pt", #LaunchConfiguration('model_config'),
+            'confidence_threshold': 0.5, #LaunchConfiguration('confidence_threshold'),
         }],
         output='screen',
         remappings=[
@@ -124,11 +116,11 @@ def generate_launch_description():
     # Create launch description
     return LaunchDescription([
         node_id_arg,
-        gstreamer_pipeline_arg,
-        camera_info_url_arg,
-        calibration_file_arg,
-        model_path_arg,
-        confidence_threshold_arg,
+        # gstreamer_pipeline_arg,
+        # camera_info_url_arg,
+        # calibration_file_arg,
+        # model_config_arg,
+        # confidence_threshold_arg,
         wait_time_clear_arg,
         wait_time_green_arg,
         max_wait_time_arg,

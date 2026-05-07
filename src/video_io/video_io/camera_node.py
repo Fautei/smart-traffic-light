@@ -14,14 +14,13 @@ class CameraNode(Node):
         super().__init__('camera_node')
 
         # Declare parameters
-        self.declare_parameter('gstreamer_pipeline', '')
-        self.declare_parameter('camera_info_url', '')
+        self.declare_parameter('rtsp_url', '')
         self.declare_parameter('frame_id', 'camera')
         self.declare_parameter('camera_name', 'traffic_light_camera')
         self.declare_parameter('calibration_file', '')
         
-        self.pipeline = self.get_parameter('gstreamer_pipeline').get_parameter_value().string_value
-        self.camera_info_url = self.get_parameter('camera_info_url').get_parameter_value().string_value
+        self.rtsp_url = self.get_parameter('rtsp_url').get_parameter_value().string_value
+        
         self.frame_id = self.get_parameter('frame_id').get_parameter_value().string_value
         self.camera_name = self.get_parameter('camera_name').get_parameter_value().string_value
         self.calibration_file = self.get_parameter('calibration_file').get_parameter_value().string_value
@@ -43,65 +42,65 @@ class CameraNode(Node):
         # Load camera calibration if provided
         if self.calibration_file and os.path.exists(self.calibration_file):
             self.load_camera_calibration(self.calibration_file)
-        elif self.camera_info_url:
-            self.load_camera_info_from_url(self.camera_info_url)
+
         
         # Open stream
         self.open_stream()
 
+
     def load_camera_calibration(self, calibration_file: str):
-        """Load camera calibration from YAML file"""
-        try:
-            with open(calibration_file, 'r') as f:
-                cal_data = yaml.safe_load(f)
-            
-            self.get_logger().info(f"Loaded camera calibration from: {calibration_file}")
-            
-            # Create CameraInfo message
-            self.camera_info_msg = CameraInfo()
-            self.camera_info_msg.header.frame_id = self.frame_id
-            self.camera_info_msg.height = cal_data.get('image_height', 480)
-            self.camera_info_msg.width = cal_data.get('image_width', 640)
-            
-            # Distortion coefficients
-            self.camera_info_msg.distortion_model = cal_data.get('distortion_model', 'plumb_bob')
-            D = cal_data.get('distortion_coefficients', {}).get('data', [0.0, 0.0, 0.0, 0.0, 0.0])
-            self.camera_info_msg.d = list(D)
-            
-            # Camera matrix
-            K = cal_data.get('camera_matrix', {}).get('data', [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0])
-            self.camera_info_msg.k = list(K)
-            
-            # Rectification matrix
-            R = cal_data.get('rectification_matrix', {}).get('data', [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0])
-            self.camera_info_msg.r = list(R)
-            
-            # Projection matrix
-            P = cal_data.get('projection_matrix', {}).get('data', [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
-            self.camera_info_msg.p = list(P)
-            
-        except Exception as e:
-            self.get_logger().error(f"Failed to load calibration file: {e}")
+        """Load camera calibration using OpenCV FileStorage"""
 
-    def load_camera_info_from_url(self, camera_info_url: str):
-        """Load camera info from ROS camera_info URL format"""
-        try:
-            # Parse URL format: file://path/to/calibration.yaml
-            if camera_info_url.startswith('file://'):
-                path = camera_info_url[7:]
-                self.load_camera_calibration(path)
-            else:
-                self.get_logger().warn(f"Unsupported URL format: {camera_info_url}")
-        except Exception as e:
-            self.get_logger().error(f"Failed to load camera info from URL: {e}")
+        fs = cv2.FileStorage(calibration_file, cv2.FILE_STORAGE_READ)
 
-    def open_stream(self):
-        self.get_logger().info(f"Opening GStreamer pipeline: {self.pipeline}")
-        self.cap = cv2.VideoCapture(self.pipeline, cv2.CAP_GSTREAMER)
+        if not fs.isOpened():
+            raise RuntimeError(f"Failed to open calibration file: {calibration_file}")
+
+        self.get_logger().info(
+            f"Loaded camera calibration from: {calibration_file}"
+        )
+
+        self.camera_info_msg = CameraInfo()
+        self.camera_info_msg.header.frame_id = self.frame_id
+
+        # Image size
+        image_width = int(fs.getNode("image_width").real())
+        image_height = int(fs.getNode("image_height").real())
+
+        self.camera_info_msg.width = image_width
+        self.camera_info_msg.height = image_height
+
+        # Camera matrix
+        camera_matrix = fs.getNode("camera_matrix").mat()
+
+        self.camera_info_msg.k = camera_matrix.flatten().tolist()
+
+        # Distortion coefficients
+        dist_coeffs = fs.getNode("dist_coeffs").mat()
+
+        self.camera_info_msg.d = dist_coeffs.flatten().tolist()
+
+        # Distortion model
+        distortion_model_node = fs.getNode("distortion_model")
+
+        if not distortion_model_node.empty():
+            self.camera_info_msg.distortion_model = distortion_model_node.string()
+        else:
+            self.camera_info_msg.distortion_model = "plumb_bob"
+
+        fs.release()
+                
+    def open_stream(self, ffmpeg = False):
+        self.get_logger().info(f"Opening url: {self.rtsp_url}")
+        if ffmpeg:
+            self.cap = cv2.VideoCapture(self.rtsp_url)
+        else:
+            pipeline = f"rtspsrc location={self.rtsp_url}! decodebin ! videoconvert ! appsink sync=false drop=true" 
+            self.cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
         if not self.cap.isOpened():
             self.get_logger().warn("Failed to open stream. Retrying in 1s...")
             time.sleep(1)
-            self.open_stream()
+            self.open_stream(ffmpeg=True)
 
     def capture_loop(self):
         if self.cap is None or not self.cap.isOpened():
@@ -124,9 +123,7 @@ class CameraNode(Node):
         
         # Publish camera info if available
         if self.camera_info_msg is not None:
-            info_msg = self.camera_info_msg.__copy__()
-            info_msg.header.stamp = msg.header.stamp
-            self.publisher_info.publish(info_msg)
+            self.publisher_info.publish(self.camera_info_msg)
 
     def destroy_node(self):
         if self.cap is not None:

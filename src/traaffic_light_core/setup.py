@@ -13,7 +13,6 @@ setup(
     ],
     install_requires=[
         'setuptools',
-        'ultralytics',
         'opencv-python',
         'PyYAML',
     ],

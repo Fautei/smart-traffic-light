@@ -36,10 +36,10 @@ def generate_launch_description():
         description='Path to camera 1 calibration YAML file'
     )
     
-    model_path_arg = DeclareLaunchArgument(
-        'model_path',
-        default_value='',
-        description='Path to YOLO model file'
+    model_config_arg = DeclareLaunchArgument(
+        'model_config',
+        default_value='yolov8n',
+        description='YOLO model config (yolov8n, yolov8s, yolov8m, yolov8l, yolov8x)'
     )
     
     confidence_threshold_arg = DeclareLaunchArgument(
@@ -92,8 +92,8 @@ def generate_launch_description():
             executable='object_detector',
             name='object_detector_0',
             parameters=[{
-                'model_path': LaunchConfiguration('model_path'),
-                'confidence_threshold': LaunchConfiguration('confidence_threshold'),
+            'model_config': LaunchConfiguration('model_config'),
+            'confidence_threshold': LaunchConfiguration('confidence_threshold'),
                 'classes_to_detect': ['car', 'truck', 'bus'],
                 'publish_detections': True,
                 'draw_detections': False,
@@ -143,8 +143,8 @@ def generate_launch_description():
             executable='object_detector',
             name='object_detector_1',
             parameters=[{
-                'model_path': LaunchConfiguration('model_path'),
-                'confidence_threshold': LaunchConfiguration('confidence_threshold'),
+            'model_config': LaunchConfiguration('model_config'),
+            'confidence_threshold': LaunchConfiguration('confidence_threshold'),
                 'classes_to_detect': ['car', 'truck', 'bus'],
                 'publish_detections': True,
                 'draw_detections': False,
@@ -180,7 +180,7 @@ def generate_launch_description():
         node_1_gstreamer_pipeline_arg,
         node_0_calibration_file_arg,
         node_1_calibration_file_arg,
-        model_path_arg,
+        model_config_arg,
         confidence_threshold_arg,
         wait_time_clear_arg,
         wait_time_green_arg,

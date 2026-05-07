@@ -5,7 +5,7 @@ ROS 2 package for a smart traffic light system designed for single-lane road rep
 ## Features
 
 - **Dual Traffic Light Coordination**: Two traffic lights work together to manage traffic on a single-lane road during repairs
-- **YOLO-based Object Detection**: Uses Ultralytics YOLOv8 for vehicle detection
+- **YOLO-based Object Detection**: Uses OpenCV DNN with YOLO for vehicle detection
 - **Camera Calibration Support**: Supports camera intrinsic and extrinsic parameters
 - **State Machine Logic**: Implements traffic light state transitions based on vehicle detection
 - **Peer-to-Peer Communication**: Traffic lights communicate directly with each other
@@ -63,7 +63,7 @@ source install/setup.bash
 ### Install Dependencies
 
 ```bash
-pip install ultralytics opencv-python PyYAML
+pip install gdown onnx opencv-python PyYAML
 ```
 
 ## Usage
@@ -76,7 +76,7 @@ ros2 launch traaffic_light_launch traaffic_light_pair.launch.py \
   node_1_gstreamer_pipeline="v4l2src device=/dev/video1 ! video/x-raw,width=640,height=480,framerate=30/1 ! videoconvert ! appsink" \
   node_0_calibration_file="$(pwd)/config/camera_calibration.yaml" \
   node_1_calibration_file="$(pwd)/config/camera_calibration.yaml" \
-  model_path="" \
+  model_config="yolov8n" \
   confidence_threshold=0.5 \
   wait_time_clear=5.0 \
   wait_time_green=3.0 \
@@ -90,7 +90,7 @@ ros2 launch traaffic_light_launch traaffic_light_launch.py \
   node_id=0 \
   gstreamer_pipeline="v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480,framerate=30/1 ! videoconvert ! appsink" \
   calibration_file="$(pwd)/config/camera_calibration.yaml" \
-  model_path="" \
+  model_config="yolov8n" \
   confidence_threshold=0.5
 ```
 
@@ -104,9 +104,11 @@ ros2 launch traaffic_light_launch traaffic_light_launch.py \
 - `camera_name`: Name of camera
 
 ### Object Detector
-- `model_path`: Path to YOLO model (.pt file)
+- `model_config`: YOLO model config (yolov8n, yolov8s, yolov8m, yolov8l, yolov8x)
 - `confidence_threshold`: Detection confidence threshold
+- `nms_threshold`: Non-maximum suppression threshold
 - `classes_to_detect`: List of classes to detect
+- `use_cuda`: Use CUDA for inference (if available)
 
 ### Traffic Light Logic
 - `node_id`: ID of this traffic light (0 or 1)

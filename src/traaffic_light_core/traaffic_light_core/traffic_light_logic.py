@@ -13,7 +13,7 @@ from enum import Enum, auto
 from typing import Optional
 from datetime import datetime
 import threading
-
+from vision_msgs.msg import Detection2DArray, Detection2D
 
 class TrafficLightState(Enum):
     """States of the traffic light system"""
@@ -34,6 +34,8 @@ class TrafficLightLogic(Node):
     Coordinates two traffic lights on a single-lane road during repair work.
     Uses standard ROS2 message types (Int32 for light state, String for peer communication).
     """
+
+    VEHICLE_CLASSES = ['car', 'truck', 'bus', 'motorcycle', 'bicycle']
     
     def __init__(self):
         super().__init__('traffic_light_logic')
@@ -84,7 +86,7 @@ class TrafficLightLogic(Node):
         
         # Subscribers - subscribe to peer's published topic
         self.detection_sub = self.create_subscription(
-            String,
+            Detection2DArray,
             self.get_parameter('detection_topic').get_parameter_value().string_value,
             self.detection_callback,
             10)
@@ -101,28 +103,25 @@ class TrafficLightLogic(Node):
         self.get_logger().info(f'Traffic light logic initialized (node_id={self.node_id})')
         self.get_logger().info(f'Initial state: GREEN (light={self.traffic_light_state})')
     
-    def detection_callback(self, msg: String):
+    def detection_callback(self, msg: Detection2DArray):
         """Process detection messages - expects JSON with detections array"""
-        try:
-            import json
-            data = json.loads(msg.data)
-            detections = data.get('detections', [])
-            
-            # Check if any vehicle is detected
-            has_vehicle = False
-            for det in detections:
-                cls = det.get('class', '').lower()
-                if cls in ['car', 'truck', 'bus', 'motorcycle']:
-                    has_vehicle = True
-                    break
-            
-            self.vehicles_in_frame = has_vehicle
-            
-            if has_vehicle:
-                self.last_vehicle_detection_time = self.get_clock().now()
-                
-        except Exception as e:
-            self.get_logger().error(f"Error processing detection: {e}")
+        detections = msg.detections
+        
+        
+        # Check if any vehicle is detected
+        has_vehicle = False
+        for det in detections:
+            #det = Detection2D()
+            cls = det.results[0].hypothesis.class_id
+            print(cls)
+            if cls in ['car', 'truck', 'bus', 'motorcycle']:
+                has_vehicle = True
+                break
+        
+        self.vehicles_in_frame = has_vehicle
+        
+        if has_vehicle:
+            self.last_vehicle_detection_time = self.get_clock().now()
     
     def peer_light_callback(self, msg: String):
         """Process peer light state messages - expects JSON with light_state field"""
