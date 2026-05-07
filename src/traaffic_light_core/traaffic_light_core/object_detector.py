@@ -101,7 +101,7 @@ class ObjectDetector(Node):
                     det.bbox.size_y = float(h)
 
                     hypothesis = ObjectHypothesisWithPose()
-                    hypothesis.hypothesis.class_id = str(cls)
+                    hypothesis.hypothesis.class_id = str(self.model.names[cls])
                     hypothesis.hypothesis.score = float(conf)
 
                     det.results.append(hypothesis)

@@ -8,124 +8,112 @@ import os
 
 
 def generate_launch_description():
-    # Declare launch arguments
-    node_id_arg = DeclareLaunchArgument(
-        'node_id',
-        default_value='0',
-        description='ID of this traffic light node (0 or 1)'
-    )
-    
-    # gstreamer_pipeline_arg = DeclareLaunchArgument(
-    #     'gstreamer_pipeline',
-    #     default_value='',
-    #     description='GStreamer pipeline for camera input'
-    # )
-    
-
-    
-    # calibration_file_arg = DeclareLaunchArgument(
-    #     'calibration_file',
-    #     default_value='',
-    #     description='Path to camera calibration YAML file'
-    # )
-    
-    model_config_arg = DeclareLaunchArgument(
-        'model_config',
-        default_value='yolov5su',
-        description='YOLO model config (yolov8n, yolov8s, yolov8m, yolov8l, yolov8x)'
-    )
-    
-    # confidence_threshold_arg = DeclareLaunchArgument(
-    #     'confidence_threshold',
-    #     default_value='0.5',
-    #     description='Confidence threshold for object detection'
-    # )
-    
-    wait_time_clear_arg = DeclareLaunchArgument(
-        'wait_time_clear',
-        default_value='5.0',
-        description='Time to wait for vehicles to clear (seconds)'
-    )
-    
-    wait_time_green_arg = DeclareLaunchArgument(
-        'wait_time_green',
-        default_value='3.0',
-        description='Time to wait before switching to green (seconds)'
-    )
-    
-    max_wait_time_arg = DeclareLaunchArgument(
-        'max_wait_time',
-        default_value='30.0',
-        description='Max time to wait for road to clear (seconds)'
-    )
-    
-    debug_draw_arg = DeclareLaunchArgument(
-        'debug_draw',
-        default_value='false',
-        description='Enable debug visualization'
-    )
     
     # Camera node
-    camera_node = Node(
+    camera_node_1 = Node(
         package='video_io',
         executable='camera_node',
-        name='camera_node',
+        name='camera_node_1',
         parameters=[{
             'rtsp_url': "rtsp://admin:daguza123@192.168.1.10",#LaunchConfiguration('gstreamer_pipeline'),
             'calibration_file': "/home/maxim/Desktop/calibration_1.yml", #LaunchConfiguration('calibration_file'),
             'frame_id': 'camera',
-            'camera_name': 'traffic_light_camera',
+            'camera_name': 'traffic_light_camera_1',
         }],
-        output='screen'
+        output='screen',
+        remappings=[
+            ('/camera/image_raw', '/camera_1/image_raw'),
+            ('/camera/camera_info', '/camera_1/camera_info'),
+        ]
     )
     
     # Object detector node
-    object_detector_node = Node(
+    object_detector_node_1 = Node(
         package='traaffic_light_core',
         executable='object_detector',
-        name='object_detector',
+        name='object_detector_1',
         parameters=[{
             'model_path': "assets/models/yolo26s.pt", #LaunchConfiguration('model_config'),
             'confidence_threshold': 0.5, #LaunchConfiguration('confidence_threshold'),
         }],
         output='screen',
         remappings=[
-            ('/camera/image_raw', '/camera/image_raw'),
+            ('/camera/image_raw', '/camera_1/image_raw'),
+            ('/camera/image_detections', '/camera_1/image_detections'),
+            ('/detections', '/detections_1'),
         ]
     )
     
     # Traffic light logic node
-    traffic_light_logic_node = Node(
+    traffic_light_logic_node_1 = Node(
         package='traaffic_light_core',
         executable='traffic_light_logic',
-        name='traffic_light_logic',
+        name='traffic_light_logic_1',
         parameters=[{
-            'node_id': LaunchConfiguration('node_id'),
-            'wait_time_clear': LaunchConfiguration('wait_time_clear'),
-            'wait_time_green': LaunchConfiguration('wait_time_green'),
-            'max_wait_time': LaunchConfiguration('max_wait_time'),
             'detection_topic': '/detections',
-            'light_state_topic': '/traffic_light/state',
-            'light_command_topic': '/traffic_light/command',
-            'peer_light_topic': '/traffic_light/peer',
-            'debug_draw': LaunchConfiguration('debug_draw'),
         }],
-        output='screen'
+        output='screen',
+        remappings=[
+            ('/detections', '/detections_1'),
+        ]
+    )
+
+        # Camera node
+    camera_node_2 = Node(
+        package='video_io',
+        executable='camera_node',
+        name='camera_node_2',
+        parameters=[{
+            'rtsp_url': "rtsp://admin:daguza123@192.168.1.10",#LaunchConfiguration('gstreamer_pipeline'),
+            'calibration_file': "/home/maxim/Desktop/calibration_1.yml", #LaunchConfiguration('calibration_file'),
+            'frame_id': 'camera',
+            'camera_name': 'traffic_light_camera',
+        }],
+        output='screen',
+        remappings=[
+            ('/camera/image_raw', '/camera_2/image_raw'),
+            ('/camera/camera_info', '/camera_2/camera_info'),
+        ]
+    )
+    
+    # Object detector node
+    object_detector_node_2 = Node(
+        package='traaffic_light_core',
+        executable='object_detector',
+        name='object_detector_2',
+        parameters=[{
+            'model_path': "assets/models/yolo26s.pt", #LaunchConfiguration('model_config'),
+            'confidence_threshold': 0.5, #LaunchConfiguration('confidence_threshold'),
+        }],
+        output='screen',
+        remappings=[
+            ('/camera/image_raw', '/camera_2/image_raw'),
+            ('/camera/image_detections', '/camera_2/image_detections'),
+            ('/detections', '/detections_2'),
+        ]
+    )
+    
+    # Traffic light logic node
+    traffic_light_logic_node_2 = Node(
+        package='traaffic_light_core',
+        executable='traffic_light_logic',
+        name='traffic_light_logic_2',
+        parameters=[{
+            'detection_topic': '/detections',
+        }],
+        output='screen',
+        remappings=[
+            ('/detections', '/detections_2'),
+        ]
     )
     
     # Create launch description
     return LaunchDescription([
-        node_id_arg,
-        # gstreamer_pipeline_arg,
-        # camera_info_url_arg,
-        # calibration_file_arg,
-        # model_config_arg,
-        # confidence_threshold_arg,
-        wait_time_clear_arg,
-        wait_time_green_arg,
-        max_wait_time_arg,
-        debug_draw_arg,
-        camera_node,
-        object_detector_node,
-        traffic_light_logic_node,
+        camera_node_1,
+        object_detector_node_1,
+        traffic_light_logic_node_1,
+
+        camera_node_2,
+        object_detector_node_2,
+        traffic_light_logic_node_2,
     ])
