@@ -33,7 +33,7 @@ class CameraNode(Node):
         self.publisher_info = self.create_publisher(CameraInfo, '/camera/camera_info', 10)
         
         # Timer for capture loop
-        self.timer = self.create_timer(0.033, self.capture_loop)  # ~30 FPS
+        self.timer = self.create_timer(0.1, self.capture_loop) 
         
         # Camera capture
         self.cap = None
@@ -105,7 +105,7 @@ class CameraNode(Node):
     def capture_loop(self):
         if self.cap is None or not self.cap.isOpened():
             self.get_logger().warn("Stream closed. Reopening...")
-            self.open_stream()
+            self.open_stream(ffmpeg=True)
             return
 
         ret, frame = self.cap.read()

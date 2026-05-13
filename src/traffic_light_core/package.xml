@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>traaffic_light_core</name>
+  <name>traffic_light_core</name>
   <version>0.0.0</version>
   <description>Package for smart traffic light system with YOLO object detection</description>
   <maintainer email="maxim.6926@gmail.com">Fautei</maintainer>
@@ -13,8 +13,10 @@
   <depend>geometry_msgs</depend>
   <depend>vision_msgs</depend>
   <depend>message_filters</depend>
+  <depend>message_runtime</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
+  <depend>traffic_light_msgs</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
