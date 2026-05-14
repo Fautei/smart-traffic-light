@@ -13,7 +13,7 @@ from std_msgs.msg import Int32MultiArray
 
 from cv_bridge import CvBridge
 
-from traffic_light_msgs.msg import PolygonPoints
+from traffic_light_msgs.msg import VehicleCounts
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import (
@@ -157,15 +157,9 @@ class StatusVisualizer(Node, QMainWindow):
             10
         )
 
-        self.polygon_sub = self.create_subscription(
-            PolygonPoints,
-            self.polygon_topic,
-            self.polygon_callback,
-            10
-        )
 
         self.count_sub = self.create_subscription(
-            Int32MultiArray,
+            VehicleCounts,
             self.count_topic,
             self.count_callback,
             10
@@ -269,17 +263,6 @@ class StatusVisualizer(Node, QMainWindow):
                 f"Image conversion failed: {e}"
             )
 
-    def polygon_callback(self, msg: PolygonPoints):
-        """
-        Receive polygon.
-        """
-
-        self.polygon_points = []
-
-        for point in msg.points:
-            self.polygon_points.append(
-                (point.x, point.y)
-            )
 
     def detection_callback(self, msg: Detection2DArray):
         """
@@ -323,12 +306,14 @@ class StatusVisualizer(Node, QMainWindow):
 
         self.current_counts = counts
 
-    def count_callback(self, msg: Int32MultiArray):
+    def count_callback(self, msg: VehicleCounts):
         """
         Receive counts.
         """
 
-        pass
+        self.current_counts = {n:c for n, c in zip(msg.detection_names, msg.counts)}
+        self.polygon_points = [(p.x,p.y) for p in msg.polygon]
+        
 
     def draw_polygon(self, frame):
         """

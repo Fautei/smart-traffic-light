@@ -6,7 +6,7 @@ from sensor_msgs.msg import Image
 from vision_msgs.msg import Detection2DArray
 from cv_bridge import CvBridge
 
-from traffic_light_msgs.msg import PolygonPoints, PolygonPoint
+from traffic_light_msgs.msg import PolygonPoints, VehicleCounts, PolygonPoint
 from std_msgs.msg import Int32MultiArray
 
 
@@ -24,16 +24,12 @@ class TrafficCounter(Node):
         # Parameters
         self.declare_parameter('detection_topic', '/detections_1')
         self.declare_parameter('polygon_topic', '/polygon_config/polygon')
-        self.declare_parameter('image_topic', '/camera_1/image_detections')
         self.declare_parameter('count_topic', '/traffic_counter/counts')
-        self.declare_parameter('debug_topic', '/traffic_counter/debug')
         self.declare_parameter('config_path', '/tmp/polygon_config.json')
 
         self.detection_topic = self.get_parameter('detection_topic').value
         self.polygon_topic = self.get_parameter('polygon_topic').value
-        self.image_topic = self.get_parameter('image_topic').value
         self.count_topic = self.get_parameter('count_topic').value
-        self.debug_topic = self.get_parameter('debug_topic').value
         self.config_path = self.get_parameter('config_path').value
 
         # Bridge
@@ -42,17 +38,11 @@ class TrafficCounter(Node):
         # Polygon points storage
         self.polygon_points = []
 
-        # Count storage
-        self.vehicle_count = 0
-        self.person_count = 0
-
         # Vehicle classes (from YOLO)
-        self.VEHICLE_CLASSES = {'car', 'truck', 'bus', 'motorcycle', 'bicycle', 'boat'}
-        self.PERSON_CLASSES = {'person'}
+        self.VEHICLE_CLASSES = {'car', 'truck', 'bus', 'motorcycle', 'bicycle', 'person'}
 
         # Publishers
-        self.count_pub = self.create_publisher(Int32MultiArray, self.count_topic, 10)
-        self.debug_pub = self.create_publisher(Image, self.debug_topic, 10)
+        self.count_pub = self.create_publisher(VehicleCounts, self.count_topic, 10)
 
         # Subscribers
         self.detection_sub = self.create_subscription(
@@ -69,16 +59,6 @@ class TrafficCounter(Node):
             10
         )
 
-        # Debug image subscriber (optional)
-        self.image_sub = self.create_subscription(
-            Image,
-            self.image_topic,
-            self.image_callback,
-            10
-        )
-
-        # Current frame for debug display
-        self.current_frame = None
 
         # Load saved polygon if exists
         self.load_polygon()
@@ -127,6 +107,8 @@ class TrafficCounter(Node):
         """
         Fast polygon test using OpenCV.
         """
+        if not self.polygon_points:
+            return False
 
         polygon_np = np.array(
                         self.polygon_points,
@@ -139,14 +121,12 @@ class TrafficCounter(Node):
             False
         )
 
-        self.get_logger().info(f"Polygon: {polygon_np}")
-
         return result >= 0
 
     def detection_callback(self, msg: Detection2DArray):
         """Callback for receiving detections"""
-        vehicle_count = 0
-        person_count = 0
+
+        counts = {n:0 for n in self.VEHICLE_CLASSES}
 
         for detection in msg.detections:
             if len(detection.results) == 0:
@@ -162,57 +142,21 @@ class TrafficCounter(Node):
             # Check if center is inside polygon
             if self.is_inside_polygon(cx, cy):
                 if cls in self.VEHICLE_CLASSES:
-                    vehicle_count += 1
-                elif cls in self.PERSON_CLASSES:
-                    person_count += 1
+                    counts[cls] +=1
 
-        self.vehicle_count = vehicle_count
-        self.person_count = person_count
+
+
 
         # Publish counts
-        counts_msg = Int32MultiArray()
-        counts_msg.data = [vehicle_count, person_count]
+        counts_msg = VehicleCounts()
+        counts_msg.polygon = [PolygonPoint(x=_x, y=_y) for _x,_y in self.polygon_points]
+        counts_msg.detection_names = list(self.VEHICLE_CLASSES)
+        counts_msg.counts = counts.values()
         self.count_pub.publish(counts_msg)
 
-        self.get_logger().debug(f"Counts: {vehicle_count} vehicles, {person_count} persons")
+        self.get_logger().debug(f"Counts: {counts} ")
 
-    def image_callback(self, msg: Image):
-        """Callback for receiving debug images"""
-        try:
-            self.current_frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        except Exception as e:
-            self.get_logger().error(f"Failed to convert image: {e}")
 
-    def draw_debug_frame(self):
-        """Draw debug frame with polygon and counts"""
-        if self.current_frame is None:
-            return None
-
-        frame = self.current_frame.copy()
-        height, width = frame.shape[:2]
-
-        # Draw polygon
-        if len(self.polygon_points) >= 3:
-            points = [(int(x), int(y)) for x, y in self.polygon_points]
-            for i in range(len(points)):
-                next_i = (i + 1) % len(points)
-                cv2.line(frame, points[i], points[next_i], (0, 255, 0), 2)
-            cv2.polylines(frame, [np.array(points)], True, (0, 255, 0), 2)
-
-        # Draw counts
-        cv2.putText(frame, f"Vehicles: {self.vehicle_count}", (10, 30),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-        cv2.putText(frame, f"Persons: {self.person_count}", (10, 60),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
-
-        return frame
-
-    def timer_callback(self):
-        """Timer callback to publish debug frame"""
-        if self.current_frame is not None:
-            debug_frame = self.draw_debug_frame()
-            if debug_frame is not None:
-                self.debug_pub.publish(self.bridge.cv2_to_imgmsg(debug_frame, encoding="bgr8"))
 
 
 def main():

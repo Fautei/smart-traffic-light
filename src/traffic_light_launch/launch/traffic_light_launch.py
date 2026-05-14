@@ -30,7 +30,7 @@ def generate_launch_description():
         name='object_detector_1',
         parameters=[{
             'model_path': "assets/models/yolo26s.pt", #LaunchConfiguration('model_config'),
-            'confidence_threshold': 0.5, #LaunchConfiguration('confidence_threshold'),
+            'confidence_threshold': 0.35, #LaunchConfiguration('confidence_threshold'),
         }],
         output='screen',
         remappings=[
@@ -119,9 +119,7 @@ def generate_launch_description():
         parameters=[{
             'detection_topic': '/detections_1',
             'polygon_topic': '/polygon_config/polygon',
-            'image_topic': '/camera_1/image_detections',
             'count_topic': '/traffic_counter/counts',
-            'debug_topic': '/traffic_counter/debug',
         }],
         output='screen',
         remappings=[
@@ -136,8 +134,6 @@ def generate_launch_description():
         name='status_visualizer',
         parameters=[{
             'detection_topic': '/detections_1',
-            'polygon_topic': '/polygon_config/polygon',
-            'image_topic': '/camera_1/image_detections',
             'count_topic': '/traffic_counter/counts',
         }],
         output='screen',

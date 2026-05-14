@@ -27,6 +27,7 @@ endif()
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PolygonPoint.msg"
   "msg/PolygonPoints.msg"
+  "msg/VehicleCounts.msg"
 )
 
 ament_package()
