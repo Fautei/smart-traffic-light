@@ -37,6 +37,9 @@ setup(
             'polygon_configurator = traffic_light_core.polygon_configurator:main',
             'traffic_counter = traffic_light_core.traffic_counter:main',
             'status_visualizer = traffic_light_core.status_visualizer:main',
+            'lidar_sensor = traffic_light_core.lidar_node:main',
+            'ir_sensor = traffic_light_core.ir_node:main',
+            'ultrasonic_sensor = traffic_light_core.ultrasonic_node:main',
         ],
     },
 )

@@ -7,8 +7,8 @@ from vision_msgs.msg import Detection2DArray
 from cv_bridge import CvBridge
 
 from traffic_light_msgs.msg import PolygonPoints, VehicleCounts, PolygonPoint
-from std_msgs.msg import Int32MultiArray
-
+from std_msgs.msg import Int32MultiArray, Float32
+from sensor_msgs.msg import PointCloud2
 
 class TrafficCounter(Node):
     """
@@ -59,6 +59,36 @@ class TrafficCounter(Node):
             10
         )
 
+        # Sensor stub topic subscriptions (pass - no processing)
+        self.declare_parameter('lidar_topic', '/lidar/scan')
+        self.declare_parameter('ir_topic', '/ir_sensor/data')
+        self.declare_parameter('ultrasonic_topic', '/ultrasonic_sensor/data')
+
+        self.lidar_topic = self.get_parameter('lidar_topic').value
+        self.ir_topic = self.get_parameter('ir_topic').value
+        self.ultrasonic_topic = self.get_parameter('ultrasonic_topic').value
+
+        self.lidar_sub = self.create_subscription(
+            PointCloud2,
+            self.lidar_topic,
+            self.lidar_callback,
+            10
+        )
+
+        self.ir_sub = self.create_subscription(
+            Float32,
+            self.ir_topic,
+            self.ir_callback,
+            10
+        )
+
+        self.ultrasonic_sub = self.create_subscription(
+            Float32,
+            self.ultrasonic_topic,
+            self.ultrasonic_callback,
+            10
+        )
+
 
         # Load saved polygon if exists
         self.load_polygon()
@@ -75,6 +105,18 @@ class TrafficCounter(Node):
             self.polygon_points.append((point.x, point.y))
         self.get_logger().info(f"Received polygon with {len(self.polygon_points)} points")
         self.save_polygon()
+
+    def lidar_callback(self, msg: PointCloud2):
+        """Callback for receiving lidar data (pass - no processing)"""
+        pass
+
+    def ir_callback(self, msg: Float32):
+        """Callback for receiving IR sensor data (pass - no processing)"""
+        pass
+
+    def ultrasonic_callback(self, msg: Float32):
+        """Callback for receiving ultrasonic sensor data (pass - no processing)"""
+        pass
 
     def save_polygon(self):
         """Save polygon to config file"""

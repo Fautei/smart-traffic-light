@@ -48,7 +48,10 @@ def generate_launch_description():
             'detection_topic': '/detections_1',
             'polygon_topic': '/polygon_config/polygon_1',
             'count_topic': '/traffic_counter_1/counts',
-            'config_path': '/tmp/polygon_config_1.json'
+            'config_path': '/tmp/polygon_config_1.json',
+            'lidar_topic': '/lidar_1/scan',
+            'ir_topic': '/ir_sensor_1/data',
+            'ultrasonic_topic': '/ultrasonic_sensor_1/data',
         }],
         output='screen',
         remappings=[
@@ -56,7 +59,7 @@ def generate_launch_description():
         ]
     )
 
-        # Camera node
+    # Camera node
     camera_node_2 = Node(
         package='video_io',
         executable='camera_node',
@@ -91,7 +94,7 @@ def generate_launch_description():
         ]
     )
 
-        # Traffic counter node
+    # Traffic counter node
     traffic_counter_node_2 = Node(
         package='traffic_light_core',
         executable='traffic_counter',
@@ -100,14 +103,79 @@ def generate_launch_description():
             'detection_topic': '/detections_2',
             'polygon_topic': '/polygon_config/polygon_2',
             'count_topic': '/traffic_counter_2/counts',
-            'config_path': '/tmp/polygon_config_2.json'
+            'config_path': '/tmp/polygon_config_2.json',
+            'lidar_topic': '/lidar_2/scan',
+            'ir_topic': '/ir_sensor_2/data',
+            'ultrasonic_topic': '/ultrasonic_sensor_2/data',
         }],
+         output='screen',
+         remappings=[
+             ('/detections_1', '/detections_2'),
+         ]
+     )
+
+    # Lidar sensor nodes for traffic_counter_1
+    lidar_sensor_node_1 = Node(
+        package='traffic_light_core',
+        executable='lidar_sensor',
+        name='lidar_sensor_1',
         output='screen',
-        remappings=[
-            ('/detections_1', '/detections_2'),
-        ]
+        parameters=[{
+            'topic_name': '/lidar_1/scan',
+        }]
     )
-    
+
+    ir_sensor_node_1 = Node(
+        package='traffic_light_core',
+        executable='ir_sensor',
+        name='ir_sensor_1',
+        output='screen',
+        parameters=[{
+            'topic_name': '/ir_sensor_1/data',
+        }]
+    )
+
+    ultrasonic_sensor_node_1 = Node(
+        package='traffic_light_core',
+        executable='ultrasonic_sensor',
+        name='ultrasonic_sensor_1',
+        output='screen',
+        parameters=[{
+            'topic_name': '/ultrasonic_sensor_1/data',
+        }]
+    )
+
+    # Lidar sensor nodes for traffic_counter_2
+    lidar_sensor_node_2 = Node(
+        package='traffic_light_core',
+        executable='lidar_sensor',
+        name='lidar_sensor_2',
+        output='screen',
+        parameters=[{
+            'topic_name': '/lidar_2/scan',
+        }]
+    )
+
+    ir_sensor_node_2 = Node(
+        package='traffic_light_core',
+        executable='ir_sensor',
+        name='ir_sensor_2',
+        output='screen',
+        parameters=[{
+            'topic_name': '/ir_sensor_2/data',
+        }]
+    )
+
+    ultrasonic_sensor_node_2 = Node(
+        package='traffic_light_core',
+        executable='ultrasonic_sensor',
+        name='ultrasonic_sensor_2',
+        output='screen',
+        parameters=[{
+            'topic_name': '/ultrasonic_sensor_2/data',
+        }]
+    )
+
     # Traffic light logic node
     traffic_light_logic_node = Node(
         package='traffic_light_core',
@@ -141,11 +209,11 @@ def generate_launch_description():
         }],
     )
 
-        # Polygon configurator node
+    # Polygon configurator node
     polygon_configurator_node_1 = Node(
         package='traffic_light_core',
         executable='polygon_configurator',
-        name='polygon_configurator',
+        name='polygon_configurator_1',
         output='screen',
         parameters=[{
             'image_topic': '/camera_1/image_raw',
@@ -156,7 +224,7 @@ def generate_launch_description():
     polygon_configurator_node_2 = Node(
         package='traffic_light_core',
         executable='polygon_configurator',
-        name='polygon_configurator',
+        name='polygon_configurator_2',
         output='screen',
         parameters=[{
             'image_topic': '/camera_2/image_raw',
@@ -168,7 +236,7 @@ def generate_launch_description():
     status_visualizer_node_1 = Node(
         package='traffic_light_core',
         executable='status_visualizer',
-        name='status_visualizer',
+        name='status_visualizer_1',
         parameters=[{
             'detection_topic': '/detections_1',
             'count_topic': '/traffic_counter_1/counts',
@@ -184,7 +252,7 @@ def generate_launch_description():
     status_visualizer_node_2 = Node(
         package='traffic_light_core',
         executable='status_visualizer',
-        name='status_visualizer',
+        name='status_visualizer_2',
         parameters=[{
             'detection_topic': '/detections_2',
             'count_topic': '/traffic_counter_2/counts',
@@ -215,4 +283,11 @@ def generate_launch_description():
         traffic_light_logic_node,
         traffic_light_indicator_node_1,
         traffic_light_indicator_node_2,
+
+        lidar_sensor_node_1,
+        ir_sensor_node_1,
+        ultrasonic_sensor_node_1,
+        lidar_sensor_node_2,
+        ir_sensor_node_2,
+        ultrasonic_sensor_node_2,
     ])
