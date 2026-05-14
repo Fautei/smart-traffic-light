@@ -54,13 +54,9 @@ class PolygonConfigurator(Node, QMainWindow):
         # Parameters
         self.declare_parameter('image_topic', '/camera_1/image_raw')
         self.declare_parameter('polygon_topic', '/polygon_config/polygon')
-        self.declare_parameter('confirm_topic', '/polygon_config/confirm')
-        self.declare_parameter('reset_topic', '/polygon_config/reset')
 
         self.image_topic = self.get_parameter('image_topic').value
         self.polygon_topic = self.get_parameter('polygon_topic').value
-        self.confirm_topic = self.get_parameter('confirm_topic').value
-        self.reset_topic = self.get_parameter('reset_topic').value
 
         # ROS
         self.bridge = CvBridge()
@@ -68,18 +64,6 @@ class PolygonConfigurator(Node, QMainWindow):
         self.polygon_pub = self.create_publisher(
             PolygonPoints,
             self.polygon_topic,
-            10
-        )
-
-        self.confirm_pub = self.create_publisher(
-            Bool,
-            self.confirm_topic,
-            10
-        )
-
-        self.reset_pub = self.create_publisher(
-            Bool,
-            self.reset_topic,
             10
         )
 
@@ -316,11 +300,6 @@ class PolygonConfigurator(Node, QMainWindow):
 
         self.polygon_pub.publish(polygon_msg)
 
-        confirm_msg = Bool()
-        confirm_msg.data = True
-
-        self.confirm_pub.publish(confirm_msg)
-
         self.get_logger().info(
             f"Polygon published: {len(self.points)} points"
         )
@@ -331,11 +310,6 @@ class PolygonConfigurator(Node, QMainWindow):
         """
 
         self.points.clear()
-
-        reset_msg = Bool()
-        reset_msg.data = True
-
-        self.reset_pub.publish(reset_msg)
 
         self.get_logger().info("Polygon reset")
 

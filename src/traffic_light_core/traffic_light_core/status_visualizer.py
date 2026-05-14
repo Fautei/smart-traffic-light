@@ -299,12 +299,6 @@ class StatusVisualizer(Node, QMainWindow):
                 }
             })
 
-            if cls not in counts:
-                counts[cls] = 0
-
-            counts[cls] += 1
-
-        self.current_counts = counts
 
     def count_callback(self, msg: VehicleCounts):
         """
@@ -530,10 +524,6 @@ class StatusVisualizer(Node, QMainWindow):
 
         self.plot_label.set_cv_image(plot)
 
-        self.info_label.setText(
-            f"Detections: {len(self.detections)} | "
-            f"Polygon points: {len(self.polygon_points)}"
-        )
 
     def keyPressEvent(self, event):
         """
