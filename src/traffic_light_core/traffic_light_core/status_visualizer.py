@@ -92,7 +92,7 @@ class StatusVisualizer(Node, QMainWindow):
         # Parameters
         self.declare_parameter('detection_topic', '/detections_1')
         self.declare_parameter('polygon_topic', '/polygon_config/polygon')
-        self.declare_parameter('image_topic', '/camera_1/image_detections')
+        self.declare_parameter('image_topic', '/camera_1/image_raw')
         self.declare_parameter('count_topic', '/traffic_counter/counts')
         self.declare_parameter('max_history', 60)
 

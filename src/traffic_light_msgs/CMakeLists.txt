@@ -28,6 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PolygonPoint.msg"
   "msg/PolygonPoints.msg"
   "msg/VehicleCounts.msg"
+  "msg/TrafficLightState.msg"
 )
 
 ament_package()
